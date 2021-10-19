@@ -2,4 +2,4 @@
 <br>
 Forked Ionic.Zlib by VSS-DEV for commpile to .NET Standard 2.0|2.1 and .NET Framework 4.6
 <br>
-Тестовая версия!
+РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ РЅРѕРІС‹С… С„СѓРЅРєС†РёР№
