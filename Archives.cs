@@ -1,4 +1,8 @@
 ﻿using Ionic.Zlib;
+using ICSharpCode.SharpZipLib.BZip2;
+using ICSharpCode.SharpZipLib.Zip;
+using ICSharpCode.SharpZipLib.GZip;
+using ICSharpCode.SharpZipLib.Tar;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -7,49 +11,264 @@ namespace DotNetArcs
 {
     public enum ArchivFormat
     {
-        Zlib
+        Zlib,
+        BZip2,
+        GZip,
+        // Lzw,
+        Tar,
+        Zip
     }
 
     public enum ArchivFunction
     {
         [Description("Производит сжатие данных")]
         Compress,
-        [Description("Производит растяжение данных")]
+        [Description("Производит расжатие данных")]
         Decompress
     }
 
     public sealed class Archives
     {
-        public Archives(ArchivFormat archivFormat, ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
+        public Archives(ArchivFormat archivFormat, ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte) 
         {
             switch (archivFormat)
             {
                 case ArchivFormat.Zlib:
-                    new ZlibArc(archivFunction, SomeDataByte, out byte[] DataAck);
-                    SomeArcDataByte = DataAck;
+                    new ZlibArc(archivFunction, SomeDataByte, out byte[] DataAckZlib);
+                    SomeArcDataByte = DataAckZlib;
+                    break;
+                case ArchivFormat.BZip2:
+                    new Bzip2Arc(archivFunction, SomeDataByte, out byte[] DataAckBZip2);
+                    SomeArcDataByte = DataAckBZip2;
+                    break;
+                case ArchivFormat.GZip:
+                    new GZipArc(archivFunction, SomeDataByte, out byte[] DataAckGZip);
+                    SomeArcDataByte = null;
+                    break;
+                //case ArchivFormat.Lzw:
+                //    SomeArcDataByte = null;
+                //    break;
+                case ArchivFormat.Tar:
+                    new TarArk(archivFunction, SomeDataByte, out byte[] DataAckTar);
+                    SomeArcDataByte = null;
+                    break;
+                case ArchivFormat.Zip:
+                    new ZipArc(archivFunction, SomeDataByte, out byte[] DataAckZip);
+                    SomeArcDataByte = null;
                     break;
                 default:
                     SomeArcDataByte = null;
                     break;
             }
         }
-        public Archives() { }
+    }
 
-        public Task<byte[]> ArchivesAsync(ArchivFormat archivFormat, ArchivFunction archivFunction, byte[] SomeDataByte)
+    #region Tar class
+    sealed class TarArk
+    {
+        internal TarArk(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
         {
-            
-
-            switch (archivFormat)
+            switch (archivFunction)
             {
-                case ArchivFormat.Zlib:
-                    var AsyncZlib = new ZlibArc();
-                    return AsyncZlib.ZlibArcAsync(archivFunction, SomeDataByte);
+                case ArchivFunction.Compress:
+                    SomeArcDataByte = Compressd(SomeDataByte);
+                    break;
+                case ArchivFunction.Decompress:
+                    SomeArcDataByte = Decompressd(SomeDataByte);
+                    break;
                 default:
-                    return null;
+                    SomeArcDataByte = null;
+                    break;
+            }
+        }
+
+        private byte[] Compressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new TarInputStream(new MemoryStream(SomeDataByte),32,System.Text.Encoding.UTF8).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+
+        private byte[] Decompressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new TarOutputStream(new MemoryStream(SomeDataByte),32,System.Text.Encoding.UTF8).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
             }
         }
     }
+    #endregion
 
+    #region Lzw class
+    //sealed class LzwArc
+    //{
+    //    internal LzwArc(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
+    //    {
+    //        switch (archivFunction)
+    //        {
+    //            case ArchivFunction.Compress:
+    //                SomeArcDataByte = Compressd(SomeDataByte);
+    //                break;
+    //            case ArchivFunction.Decompress:
+    //                SomeArcDataByte = Decompressd(SomeDataByte);
+    //                break;
+    //            default:
+    //                SomeArcDataByte = null;
+    //                break;
+    //        }
+    //    }
+    //    private byte[] Compressd(byte[] SomeDataByte)
+    //    {
+    //        using (var memoryStream = new MemoryStream())
+    //        {
+    //            var Tsk = new Task(async () => await new L(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+    //            Task.WaitAll(Tsk);
+    //            return memoryStream.ToArray();
+    //        }
+    //    }
+
+    //    private byte[] Decompressd(byte[] SomeDataByte)
+    //    {
+    //        using (var memoryStream = new MemoryStream())
+    //        {
+    //            var Tsk = new Task(async () => await new GZipInputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+    //            Task.WaitAll(Tsk);
+    //            return memoryStream.ToArray();
+    //        }
+    //    }
+    //}
+    #endregion
+
+    #region Gzip class
+    sealed class GZipArc
+    {
+        internal GZipArc(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
+        {
+            switch (archivFunction)
+            {
+                case ArchivFunction.Compress:
+                    SomeArcDataByte = Compressd(SomeDataByte);
+                    break;
+                case ArchivFunction.Decompress:
+                    SomeArcDataByte = Decompressd(SomeDataByte);
+                    break;
+                default:
+                    SomeArcDataByte = null;
+                    break;
+            }
+        }
+
+        private byte[] Compressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new GZipOutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+
+        private byte[] Decompressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new GZipInputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+    }
+    #endregion
+
+    #region Zip class
+    sealed class ZipArc
+    {
+        internal ZipArc(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
+        {
+            switch (archivFunction)
+            {
+                case ArchivFunction.Compress:
+                    SomeArcDataByte = Compressd(SomeDataByte);
+                    break;
+                case ArchivFunction.Decompress:
+                    SomeArcDataByte = Decompressd(SomeDataByte);
+                    break;
+                default:
+                    SomeArcDataByte = null;
+                    break;
+            }
+        }
+
+        private byte[] Compressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new ZipOutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+
+        private byte[] Decompressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new ZipInputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+
+    }
+    #endregion
+
+    #region Bzip2 Class
+    sealed class Bzip2Arc
+    {
+        internal Bzip2Arc(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
+        {
+            switch (archivFunction)
+            {
+                case ArchivFunction.Compress:
+                    SomeArcDataByte = Compressd(SomeDataByte);
+                    break;
+                case ArchivFunction.Decompress:
+                    SomeArcDataByte = Decompressd(SomeDataByte);
+                    break;
+                default:
+                    SomeArcDataByte = null;
+                    break;
+            }
+        }
+
+        private byte[] Compressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async() => await new BZip2OutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+
+        private byte[] Decompressd(byte[] SomeDataByte)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var Tsk = new Task(async () => await new BZip2InputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
+                return memoryStream.ToArray();
+            }
+        }
+    }
+    #endregion
+
+    #region Zlib Class
     sealed class ZlibArc
     {
         internal ZlibArc(ArchivFunction archivFunction, byte[] SomeDataByte, out byte[] SomeArcDataByte)
@@ -67,52 +286,14 @@ namespace DotNetArcs
                     break;
             }
         }
-        internal ZlibArc() { }
-
-        internal async Task<byte[]> ZlibArcAsync(ArchivFunction archivFunction, byte[] SomeDataByte)
-        {
-            switch (archivFunction)
-            {
-                case ArchivFunction.Compress:
-                    
-                    return await CompressdAsync(SomeDataByte);
-                case ArchivFunction.Decompress:
-                    return await DecompressdAsync(SomeDataByte);
-                default:
-                    return null;
-            }
-        }
-
-        #region Асинхронные функции
-        private async Task<byte[]> CompressdAsync(byte[] SomeDataByte)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                var ZlibStream = new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9);
-                await Task.Delay(200);
-                await ZlibStream.CopyToAsync(memoryStream);
-                return memoryStream.ToArray();
-            }
-        }
-
-        private async Task<byte[]> DecompressdAsync(byte[] SomeDataByte)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                var ZlibStram = new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress);
-                await Task.Delay(200);
-                await ZlibStram.CopyToAsync(memoryStream);
-                return memoryStream.ToArray();
-            }
-        }
-        #endregion
 
         #region Синхронные функции
         private byte[] Compressd(byte[] SomeDataByte)
         {
             using (var memoryStream = new MemoryStream())
             {
-                new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9).CopyTo(memoryStream);
+                var Tsk = new Task(async () => await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
         }
@@ -121,10 +302,12 @@ namespace DotNetArcs
         {
             using (var memoryStream = new MemoryStream())
             {
-                new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress).CopyTo(memoryStream);
+                var Tsk = new Task(async () => await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress).CopyToAsync(memoryStream));
+                Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
         }
         #endregion
     }
+    #endregion
 }
