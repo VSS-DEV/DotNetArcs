@@ -9,7 +9,7 @@
     <PackageId>DotNetArcs</PackageId>
     <Authors>VSS-DEV Team</Authors>
     <RootNamespace>DotNetArcs</RootNamespace>
-    <Version>2.1.0.35-alpha.2</Version>
+    <Version>2.1.0.40-alpha.3</Version>
     <Description>library for Deflate and ZLIB compression.\r\nDino Chiesa make Ionic.Zlib sourse.\r\nSharpZipLib (#ziplib, formerly NZipLib) is a compression library for Zip, GZip, BZip2, and Tar written entirely in C# for .NET. It is implemented as an assembly (installable in the GAC), and thus can easily be incorporated into other projects (in any .NET language). URL Project https://github.com/icsharpcode/SharpZipLib</Description>
     <RepositoryUrl>https://github.com/VSS-DEV/DotNetArcs</RepositoryUrl>
     
@@ -20,7 +20,7 @@
     <LangVersion>Preview</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageReleaseNotes>Исправление зависания при попытке архивации через класс Archives</PackageReleaseNotes>
+    <PackageReleaseNotes>Возвращение к синхронным методам.</PackageReleaseNotes>
     
   </PropertyGroup>
   
