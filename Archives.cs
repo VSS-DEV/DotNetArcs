@@ -87,6 +87,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new TarInputStream(new MemoryStream(SomeDataByte),32,System.Text.Encoding.UTF8).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -97,6 +98,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new TarOutputStream(new MemoryStream(SomeDataByte),32,System.Text.Encoding.UTF8).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -168,6 +170,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new GZipOutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -178,6 +181,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new GZipInputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -209,6 +213,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new ZipOutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -219,6 +224,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new ZipInputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -251,6 +257,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async() => await new BZip2OutputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -261,6 +268,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new BZip2InputStream(new MemoryStream(SomeDataByte)).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -293,6 +301,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
@@ -303,6 +312,7 @@ namespace DotNetArcs
             using (var memoryStream = new MemoryStream())
             {
                 var Tsk = new Task(async () => await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress).CopyToAsync(memoryStream));
+                Tsk.Start();
                 Task.WaitAll(Tsk);
                 return memoryStream.ToArray();
             }
