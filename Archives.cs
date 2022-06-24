@@ -5,7 +5,7 @@ using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using System.ComponentModel;
 using System.IO;
-using System.Threading.Tasks;
+using System;
 
 namespace DotNetArcs
 {
@@ -23,7 +23,7 @@ namespace DotNetArcs
     {
         [Description("Производит сжатие данных")]
         Compress,
-        [Description("Производит расжатие данных")]
+        [Description("Производит разжатие данных")]
         Decompress
     }
 
@@ -281,11 +281,25 @@ namespace DotNetArcs
             switch (archivFunction)
             {
                 case ArchivFunction.Compress:
-                    Compressd(SomeDataByte);                    
+                    new AsyncTasker(new Action(async () => {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9).CopyToAsync(memoryStream);
+                            tmpData = memoryStream.ToArray();
+                        }
+                    }));
+
                     SomeArcDataByte = tmpData;
                     break;
                 case ArchivFunction.Decompress:
-                    Decompressd(SomeDataByte);
+                    new AsyncTasker(new Action(async () => {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress).CopyToAsync(memoryStream);
+                            tmpData = memoryStream.ToArray();
+                        }
+                    }));
+
                     SomeArcDataByte = tmpData;
                     break;
                 default:
@@ -293,25 +307,7 @@ namespace DotNetArcs
                     break;
             }
         }
-
-        #region Синхронные функции
-        private void Compressd(byte[] SomeDataByte)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Compress, CompressionLevel.Level9).CopyTo(memoryStream);
-                tmpData = memoryStream.ToArray();
-            }
-        }
-        private void Decompressd(byte[] SomeDataByte)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                new ZlibStream(new MemoryStream(SomeDataByte), CompressionMode.Decompress).CopyTo(memoryStream);
-                tmpData = memoryStream.ToArray();
-            }
-        }
-        #endregion
+        
     }
     #endregion
 }
